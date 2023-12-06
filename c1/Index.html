@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <!-- Bootstrap CSS 추가 -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+      body {
+        padding: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="row mb-3">
+        <div class="col">
+          <select id="sheetSelect" onchange="loadRowData()" class="form-control">
+            <option>Loading...</option>
+          </select>
+        </div>
+        <div class="col">
+          <button onclick="loadPreviousRow()" class="btn btn-primary">이전 줄</button>
+          <button onclick="loadNextRow()" class="btn btn-primary">다음 줄</button>
+        </div>
+      </div>
+
+      <div class="row mb-3">
+        <div class="col" id="dataInput">
+          <!-- 데이터 입력 필드가 여기에 들어갑니다. -->
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col">
+          <button onclick="saveData()" class="btn btn-success">저장</button>
+        </div>
+      </div>
+
+      <div class="row mt-3">
+        <div class="col">
+          <span id="currentRow" class="badge badge-secondary"></span>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      var currentRow = 2; // 데이터가 시작되는 행
+
+      document.addEventListener("DOMContentLoaded", function() {
+        google.script.run.withSuccessHandler(buildDropdown).getSheetNames();
+      });
+
+      function buildDropdown(sheetNames) {
+        var select = document.getElementById('sheetSelect');
+        select.innerHTML = '';
+        sheetNames.forEach(function(name) {
+          var option = document.createElement('option');
+          option.value = name;
+          option.textContent = name;
+          select.appendChild(option);
+        });
+        loadRowData();
+      }
+
+      function loadRowData() {
+        var sheetName = document.getElementById('sheetSelect').value;
+        google.script.run.withSuccessHandler(displayData).getRowData(sheetName, currentRow);
+        updateCurrentRowDisplay();
+      }
+
+      function displayData(data) {
+        var inputDiv = document.getElementById('dataInput');
+        inputDiv.innerHTML = '';
+        data.forEach(function(value, index) {
+          var input = document.createElement('input');
+          input.type = 'text';
+          input.className = 'form-control mb-2'; // Bootstrap 클래스 추가
+          input.value = value;
+          input.dataset.column = index + 1;
+          inputDiv.appendChild(input);
+        });
+      }
+
+      function loadPreviousRow() {
+        if (currentRow > 2) {
+          currentRow--;
+          loadRowData();
+        }
+      }
+
+      function loadNextRow() {
+        currentRow++;
+        loadRowData();
+      }
+
+      function saveData() {
+        var sheetName = document.getElementById('sheetSelect').value;
+        var inputs = document.getElementById('dataInput').querySelectorAll('input');
+        var rowData = Array.from(inputs).map(input => input.value);
+        google.script.run.updateRowData(sheetName, currentRow, rowData);
+      }
+
+      function updateCurrentRowDisplay() {
+        document.getElementById('currentRow').textContent = '현재 줄: ' + currentRow;
+      }
+    </script>
+  </body>
+</html>
